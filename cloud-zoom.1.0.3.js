@@ -189,16 +189,26 @@
                 position:'absolute',
                 zIndex:9999
             });
+
+
+            // Detect device type, normal mouse or touchy(ipad android) by albanx
+            var touchy = ("ontouchstart" in document.documentElement) ? true : false;
+            var m_move = 'touchmove mousemove';
+            var m_end = 'touchend mouseleave';
+            var m_enter = 'touchstart mouseenter';
+            var m_click = 'touchstart click';
+
             //////////////////////////////////////////////////////////////////////			
             /* Do as little as possible in mousemove event to prevent slowdown. */
-            $mouseTrap.bind('mousemove', this, function (event) {
+            $mouseTrap.bind(m_move, this, function (event) {
                 // Just update the mouse position
-                mx = event.pageX;
-                my = event.pageY;
-               
+                mx = (typeof(event.originalEvent.touches) != 'undefined') ?
+                    event.originalEvent.touches[0].pageX : event.pageX;
+                my = (typeof(event.originalEvent.touches) != 'undefined') ?
+                    event.originalEvent.touches[0].pageY : event.pageY;
             });
             //////////////////////////////////////////////////////////////////////					
-            $mouseTrap.bind('mouseleave', this, function (event) {
+            $mouseTrap.bind(m_end, this, function (event) {
                 clearTimeout(controlTimer);
                 //event.data.removeBits();                
                 if(lens) {
@@ -216,9 +226,18 @@
                 return false;
             });
             //////////////////////////////////////////////////////////////////////			
-            $mouseTrap.bind('mouseenter', this, function (event) {
-                mx = event.pageX;
-                my = event.pageY;
+            $mouseTrap.bind(m_enter, this, function (event) {
+
+                //FOXYSHOP ADDED
+                //consider only one touch for zooming
+                if (touchy) {
+                  event.preventDefault();
+                }
+                mx = (typeof(event.originalEvent.touches) != 'undefined') ?
+                    event.originalEvent.touches[0].pageX : event.pageX;
+                my = (typeof(event.originalEvent.touches) != 'undefined') ?
+                    event.originalEvent.touches[0].pageY : event.pageY;
+
                 zw = event.data;
                 if (zoomDiv) {
                     zoomDiv.stop(true, false);
@@ -386,7 +405,10 @@
             } else if ($(this).is('.cloud-zoom-gallery')) {
                 opts = $.extend({}, relOpts, options);
                 $(this).data('relOpts', opts);
-                $(this).bind('click', $(this), function (event) {
+
+                var m_click='touchstart click';
+
+                $(this).bind(m_click, $(this), function (event) {
                     var data = event.data.data('relOpts');
                     // Destroy the previous zoom
                     $('#' + data.useZoom).data('zoom').destroy();
